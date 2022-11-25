@@ -8,7 +8,12 @@
 
 import time
 import terminalio
+import ssl
+import wifi
+import socketpool
+import adafruit_requests
 from adafruit_magtag.magtag import MagTag
+from secrets import secrets
 
 months = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
@@ -21,6 +26,26 @@ DATA_SOURCE = "https://api.spacexdata.com/v4/launches/next"
 DETAIL_LOCATION = ['details']
 NAME_LOCATION = ['name']
 DATE_LOCATION = ['date_local']
+
+def getTime(): 
+	# Utility Function to get current time. 
+
+	aio_username = secrets["aio_username"]
+	aio_key = secrets["aio_key"]
+	location = secrets.get("timezone", None)
+	TIME_URL = "https://io.adafruit.com/api/v2/%s/integrations/time/strftime?x-aio-key=%s&tz=%s" % (aio_username, aio_key, location)
+	TIME_URL += "&fmt=%25Y-%25m-%25d+%25H%3A%25M%3A%25S.%25L+%25j+%25u+%25z+%25Z"
+
+	wifi.radio.connect(secrets["ssid"], secrets["password"])
+	pool = socketpool.SocketPool(wifi.radio)
+	requests = adafruit_requests.Session(pool, ssl.create_default_context())
+
+	print("Fetching text from", TIME_URL)
+	response = requests.get(TIME_URL)
+	rval = response.text
+
+	return rval
+
 
 # These functions take the JSON data keys and does checks to determine
 #   how to display the data. They're used in the add_text blocks below
@@ -49,8 +74,15 @@ def time_transform(val2):
 
 def details_transform(val3):
     if val3 == None or not len(val3):
-        return "Details: To Be Determined"
-    return "Details: " + val3[0:166] + "..."
+        detailsMsg = "Details: To Be Determined "
+    else:
+	    detailsMsg = "Details: " + val3[0:166] + "... "
+	    
+	# Get Current Time 
+    detailsMsg += getTime()
+    
+    return detailsMsg
+
 
 # Set up the MagTag with the JSON data parameters
 magtag = MagTag(
