@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Secrets 
+secrets.py
+
+# Mac stuff
+.DS_Store
+
 # C extensions
 *.so
 
