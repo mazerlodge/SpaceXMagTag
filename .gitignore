@@ -8,6 +8,7 @@ secrets.py
 
 # Mac stuff
 .DS_Store
+*.bbprojectd
 
 # C extensions
 *.so
